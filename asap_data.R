@@ -24,7 +24,8 @@ write.csv(set1_train, "set1_train.csv", row.names = F)
 
 set1_test <- pub %>%
   filter(EssaySet==1) %>%
-  select(c(Id,essay_score,EssayText))
+  select(c(Id,essay_score,EssayText)) %>%
+  rename(Score1=essay_score)
 write.csv(set1_test, "set1_test.csv", row.names = F)
 
 
