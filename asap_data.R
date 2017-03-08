@@ -4,6 +4,10 @@
 #
 library(dplyr)
 library(magrittr)
+library(splitstackshape)
+
+
+set.seed(12345)
 
 train <- read.csv('Data/train_rel_2.tsv', sep="\t", stringsAsFactors = FALSE)
 
@@ -23,21 +27,44 @@ oneset <- function(id){
     filter(EssaySet==id) %>%
     select(c(Score1,EssayText)) %>%
     rename(label=Score1, text=EssayText)
-  write.csv(set_train, trainFile, row.names = F)
+  #write.csv(set_train, trainFile, row.names = F)
   
   set_test <- pub %>%
     filter(EssaySet==id) %>%
     select(c(essay_score,EssayText)) %>%
     rename(label=essay_score,text=EssayText)
-  write.csv(set_test, testFile, row.names = F)
+  #write.csv(set_test, testFile, row.names = F)
   
   if(max(set_train$label) != max(set_test$label)){
     print("WRONG")
   }
-  
+  set_train
+ 
 }
 
-# lapply(1:10, oneset)
+get_devta <- function(set_train){
+  devs <- stratified(set_train, "label", .2, bothSets=T)
+  devs$SAMP2
+
+}
+
+get_devts <- function(set_train){
+  devs <- stratified(set_train, "label", .2, bothSets=T)
+  devs$SAMP1
+
+}
+
+tas<-lapply(1:10, oneset)
+dev_ta <- lapply(tas, get_devta) %>%
+  Reduce(function(df1,df2) full_join(df1,df2), .)
+
+dev_ts <- lapply(tas, get_devts) %>%
+  Reduce(function(df1,df2) full_join(df1,df2), .)
+
+devtaFile <- paste0('asap/dev_ta', '.csv')
+write.csv(dev_ta, devtaFile, row.names = F)
+devtsFile <- paste0('asap/dev_ts', '.csv')
+write.csv(dev_ts, devtsFile, row.names = F)
 
 # test BOW baseline performance.
 # dplyr and the Metrics packages are so neat to work together.
